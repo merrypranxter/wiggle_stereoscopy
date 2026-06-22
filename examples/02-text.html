@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiggle Text</title>
+<style>
+body { background: #fffbe8; display: flex; align-items: center; justify-content: center; height: 100vh; color: #333; font-family: Arial, sans-serif; }
+#controls { position: fixed; top: 20px; left: 20px; }
+label { display: block; margin-bottom: 6px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <label>Frequency (Hz)
+    <input type="range" id="freq" min="1" max="12" step="0.1" value="7">
+  </label>
+  <label>Crossfade
+    <input type="range" id="mix" min="0" max="1" step="0.01" value="0">
+  </label>
+</div>
+<h1 id="text">Hello Wiggle!</h1>
+<script>
+const text = document.getElementById('text');
+const freqSlider = document.getElementById('freq');
+const mixSlider = document.getElementById('mix');
+let freq = parseFloat(freqSlider.value);
+let mix = parseFloat(mixSlider.value);
+freqSlider.addEventListener('input', () => { freq = parseFloat(freqSlider.value); });
+mixSlider.addEventListener('input', () => { mix = parseFloat(mixSlider.value); });
+let t = 0;
+function update() {
+  t += 1/60;
+  const period = 1 / freq;
+  const phase = (t % period) / period;
+  let off;
+  if (mix < 0.01) {
+    off = phase < 0.5 ? -10 : 10;
+  } else {
+    const raw = Math.sin(phase * Math.PI * 2);
+    off = raw * 10 * mix + (phase < 0.5 ? -10 * (1 - mix) : 10 * (1 - mix));
+  }
+  text.style.transform = `translateX(${off}px)`;
+  requestAnimationFrame(update);
+}
+update();
+</script>
+</body>
+</html>
