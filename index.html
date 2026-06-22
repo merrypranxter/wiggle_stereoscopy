@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiggle Stereoscopy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+
+    #ui {
+      position: fixed; top: 0; right: 0;
+      width: 230px;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(8px);
+      border-left: 1px solid rgba(255,255,255,0.07);
+      padding: 14px;
+      color: rgba(255,255,255,0.82);
+      font-size: 11px; line-height: 1.65;
+      z-index: 10; user-select: none;
+      overflow-y: auto; max-height: 100vh;
+    }
+    #ui h2 {
+      font-size: 9px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding-bottom: 7px;
+    }
+    .slbl {
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.25);
+      margin: 10px 0 5px;
+    }
+    .param { margin-bottom: 7px; }
+    .param label { display: flex; justify-content: space-between; margin-bottom: 2px; color: rgba(255,255,255,0.6); }
+    .param label span { color: rgba(255,255,255,0.28); font-variant-numeric: tabular-nums; }
+    input[type=range] {
+      width: 100%; height: 2px; -webkit-appearance: none; appearance: none;
+      background: rgba(255,255,255,0.1); outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 9px; height: 9px;
+      border-radius: 50%; background: rgba(255,255,255,0.7); cursor: pointer;
+    }
+    .regime-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 3px; }
+    .rbtn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.45); padding: 4px 3px;
+      font-size: 9px; letter-spacing: 0.05em; cursor: pointer;
+      transition: all 0.1s; font-family: inherit; line-height: 1.3;
+    }
+    .rbtn:hover { background: rgba(255,255,255,0.09); color: #fff; }
+    .rbtn.active { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); color: #fff; }
+    .toggle-row { display: flex; gap: 5px; margin-top: 4px; }
+    .tbtn {
+      flex: 1; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.45); padding: 5px 2px;
+      font-size: 9px; cursor: pointer; font-family: inherit;
+      transition: all 0.1s;
+    }
+    .tbtn:hover { background: rgba(255,255,255,0.09); color: #fff; }
+    .tbtn.active { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); color: #fff; }
+    .hotkeys { margin-top: 10px; font-size: 9px; color: rgba(255,255,255,0.2); line-height: 1.9; }
+    .hotkeys span { color: rgba(255,255,255,0.38); }
+    #wiggle-state { font-size: 9px; color: rgba(255,255,255,0.22); margin-top: 6px; letter-spacing: 0.07em; }
+    .fps { position: fixed; bottom: 8px; left: 8px; font-size: 9px; color: rgba(255,255,255,0.18); z-index: 10; font-family: monospace; letter-spacing: 0.06em; }
+    #tagline { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 9px; color: rgba(255,255,255,0.14); z-index: 10; font-family: monospace; letter-spacing: 0.1em; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+
+  <div id="ui">
+    <h2>Wiggle Stereoscopy</h2>
+
+    <div class="slbl">Regime</div>
+    <div class="regime-btns">
+      <button class="rbtn active" data-regime="natural_stereo">natural stereo</button>
+      <button class="rbtn" data-regime="hyperstereo">hyperstereo</button>
+      <button class="rbtn" data-regime="hypostereo">hypostereo</button>
+      <button class="rbtn" data-regime="slow_wiggle">slow wiggle</button>
+      <button class="rbtn" data-regime="fast_wiggle">fast wiggle</button>
+      <button class="rbtn" data-regime="crossfade">crossfade</button>
+    </div>
+
+    <div class="slbl">Camera</div>
+    <div class="param">
+      <label>baseline (cm) <span id="v-baseline">6.50</span></label>
+      <input type="range" id="baseline" min="0" max="60" step="0.1" value="6.5">
+    </div>
+    <div class="param">
+      <label>focal length <span id="v-focal">1.00</span></label>
+      <input type="range" id="focal" min="0.5" max="3.0" step="0.01" value="1.0">
+    </div>
+
+    <div class="slbl">Wiggle</div>
+    <div class="param">
+      <label>frequency (Hz) <span id="v-frequency">8.00</span></label>
+      <input type="range" id="frequency" min="1" max="20" step="0.1" value="8.0">
+    </div>
+    <div class="param">
+      <label>crossfade mix <span id="v-crossfade_mix">0.00</span></label>
+      <input type="range" id="crossfade_mix" min="0" max="1" step="0.01" value="0">
+    </div>
+
+    <div class="slbl">Controls</div>
+    <div class="toggle-row">
+      <button class="tbtn active" id="btn-wiggle">wiggle ON</button>
+      <button class="tbtn" id="btn-freeze-l">freeze L</button>
+      <button class="tbtn" id="btn-freeze-r">freeze R</button>
+    </div>
+
+    <div class="slbl">Scene</div>
+    <div class="param">
+      <label>depth layers <span id="v-depth_layers">5</span></label>
+      <input type="range" id="depth_layers" min="1" max="12" step="1" value="5">
+    </div>
+    <div class="param">
+      <label>particle count <span id="v-particle_count">800</span></label>
+      <input type="range" id="particle_count" min="100" max="3000" step="50" value="800">
+    </div>
+    <div class="param">
+      <label>scene drift <span id="v-scene_drift">0.20</span></label>
+      <input type="range" id="scene_drift" min="0" max="1" step="0.01" value="0.2">
+    </div>
+
+    <div id="wiggle-state">— ready —</div>
+
+    <div class="hotkeys">
+      <span>SPC</span> toggle wiggle &nbsp; <span>C</span> crossfade<br>
+      <span>F/G</span> freeze L/R &nbsp; <span>↑↓</span> speed<br>
+      <span>←→</span> baseline
+    </div>
+  </div>
+
+  <div class="fps" id="fps">-- fps</div>
+  <div id="tagline">two frames. wiggle. depth.</div>
+
+  <script type="module" src="src/js/main.js"></script>
+</body>
+</html>
