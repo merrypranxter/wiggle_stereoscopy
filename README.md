@@ -56,6 +56,10 @@ Optimal wiggle: **5–10 Hz**. Below 3 Hz = visible flicker. Above 15 Hz = frame
 
 See [`docs/math-reference.md`](docs/math-reference.md) for full equations and references.
 
+## Examples
+
+Simple demos live in the `examples/` folder. These HTML pages use basic canvas drawing to demonstrate wiggle stereoscopy on hearts, text, and a starfield. They require no WebGL and can be easily adapted. See [`examples/README.md`](examples/README.md) for descriptions.
+
 ## Project Structure
 
 ```
@@ -72,6 +76,10 @@ src/
 docs/
   math-reference.md  — parallax equations, frequency table, camera model
   visual-targets.md  — per-regime look descriptions, output checklist
+examples/
+  01-hearts.html  — hearts wiggle demo
+  02-text.html    — text wiggle demo
+  03-starfield.html — starfield wiggle demo
 ```
 
 ## Ecosystem
