@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiggle Starfield</title>
+<style>
+body { background: #001522; overflow: hidden; margin: 0; }
+#controls { position: fixed; top: 15px; left: 15px; color: #fff; font-family: monospace; font-size: 13px; z-index: 100; }
+label { display: block; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="controls">
+  <label>Baseline <input type="range" id="baseline" min="0" max="40" step="1" value="6"></label>
+  <label>Frequency <input type="range" id="freq" min="1" max="20" step="1" value="8"></label>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let baseline = 6, freq = 8;
+document.getElementById('baseline').addEventListener('input', e => baseline = parseFloat(e.target.value));
+document.getElementById('freq').addEventListener('input', e => freq = parseFloat(e.target.value));
+let stars = [];
+function init() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = [];
+  for (let i = 0; i < 1000; i++) {
+    stars.push({ x: Math.random(), y: Math.random(), z: Math.random() });
+  }
+}
+init();
+window.addEventListener('resize', init);
+let t = 0;
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  t += 1/60;
+  const period = 1/freq;
+  const phase = (t % period) / period;
+  const shift = phase < 0.5 ? -baseline/100 : baseline/100;
+  stars.forEach(s => {
+    const x = (s.x - 0.5) * canvas.width + shift * canvas.width * s.z;
+    const y = (s.y - 0.5) * canvas.height;
+    const size = 1 + (1 - s.z) * 2;
+    const r = Math.floor(200 + s.z * 55);
+    ctx.fillStyle = `rgb(${r},${r},255)`;
+    ctx.beginPath();
+    ctx.arc(x + canvas.width/2, y + canvas.height/2, size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
