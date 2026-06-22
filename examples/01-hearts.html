@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiggle Hearts</title>
+<style>
+body { background: #fdf0f9; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; color: #444; }
+#canvas { width: 80vmin; height: 80vmin; }
+#controls { position: fixed; top: 20px; left: 20px; }
+label { font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="controls">
+  <label>Frequency (Hz)
+    <input type="range" id="freq" min="1" max="10" step="0.1" value="5">
+  </label>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const freqSlider = document.getElementById('freq');
+let freq = 5;
+freqSlider.addEventListener('input', () => { freq = parseFloat(freqSlider.value); });
+function resize() {
+  canvas.width = canvas.clientWidth * window.devicePixelRatio;
+  canvas.height = canvas.clientHeight * window.devicePixelRatio;
+}
+resize();
+window.addEventListener('resize', resize);
+let t = 0;
+function draw() {
+  t += 1/60;
+  const phase = (t * freq) % 1;
+  const offset = phase < 0.5 ? -0.02 : 0.02;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const cx = canvas.width/2;
+  const cy = canvas.height/2;
+  const depths = [0.2, 0.4, 0.6, 0.8];
+  depths.forEach((d, i) => {
+    const scale = 50 / (d + 0.2);
+    const x = cx + offset * canvas.width * d;
+    const y = cy - (i - 1.5) * 80;
+    drawHeart(ctx, x, y, scale, '#e94a86');
+  });
+  requestAnimationFrame(draw);
+}
+function drawHeart(ctx, x, y, size, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  const s = size / 2;
+  ctx.moveTo(x, y - s/3);
+  ctx.bezierCurveTo(x - s, y - s*1.5, x - s*2, y + s*0.5, x, y + s);
+  ctx.bezierCurveTo(x + s*2, y + s*0.5, x + s, y - s*1.5, x, y - s/3);
+  ctx.closePath();
+  ctx.fill();
+}
+draw();
+</script>
+</body>
+</html>
